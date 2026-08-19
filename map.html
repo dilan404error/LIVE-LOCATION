@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Peta Lokasi Bus</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 
 <style>
   html, body { height: 100%; margin: 0; font-family: sans-serif; }
@@ -34,7 +34,6 @@
 <script>
 // GANTI dengan URL Web App hasil deploy Apps Script kamu
 var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzLl44f5jwX6DKKGLbfFLbzcY8_kHi89fAWjgAgiJWDJUPn1rBeS9mgsmWUWDL8oKZI5A/exec';
-
 var map = L.map('map').setView([-8.1120, 115.0882], 12); // default: Buleleng, Bali, ganti sesuai lokasi kamu
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
