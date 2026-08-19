@@ -33,7 +33,7 @@
 
 <script>
 // GANTI dengan URL Web App hasil deploy Apps Script kamu
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzLl44f5jwX6DKKGLbfFLbzcY8_kHi89fAWjgAgiJWDJUPn1rBeS9mgsmWUWDL8oKZI5A/exec';
+var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzLl44f5jwX6DKKGLbfFLbzcY8_kHi89fAWjgAgiJWDJUPn1rBeS9mgsmWUWDL8oKZI5A/exec';
 
 var map = L.map('map').setView([-8.1120, 115.0882], 12); // default: Buleleng, Bali, ganti sesuai lokasi kamu
 
@@ -66,9 +66,13 @@ function cekPosisiBus() {
         }
       });
 
-      // fokuskan peta ke bus pertama
+      // fokuskan peta ke bus pertama (transisi halus + pastikan tile ke-refresh)
       var first = data[0];
-      map.panTo([parseFloat(first.lat), parseFloat(first.lng)]);
+      map.flyTo([parseFloat(first.lat), parseFloat(first.lng)], map.getZoom(), {
+        animate: true,
+        duration: 1
+      });
+      setTimeout(function () { map.invalidateSize(); }, 300);
 
       document.getElementById('lastUpdate').innerText =
         'Terakhir dicek: ' + new Date().toLocaleTimeString();
