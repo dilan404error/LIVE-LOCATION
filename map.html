@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peta Lokasi Bus</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  html, body { height: 100%; margin: 0; font-family: sans-serif; }
+  #map { height: 100%; width: 100%; }
+  #panel {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 1000; background: white; padding: 10px 16px; border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3); text-align: center;
+  }
+  #panel button {
+    padding: 10px 20px; font-size: 15px; background: #1a73e8; color: white;
+    border: none; border-radius: 6px; cursor: pointer;
+  }
+  #lastUpdate { font-size: 12px; color: #555; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div id="panel">
+  <button onclick="cekPosisiBus()">Cek Posisi Bus</button>
+  <div id="lastUpdate">Belum dicek</div>
+</div>
+<div id="map"></div>
+
+<script>
+// GANTI dengan URL Web App hasil deploy Apps Script kamu
+var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP';
+
+var map = L.map('map').setView([-8.1120, 115.0882], 12); // default: Buleleng, Bali, ganti sesuai lokasi kamu
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19
+}).addTo(map);
+
+var markers = {}; // simpan marker per bus_id
+
+function cekPosisiBus() {
+  fetch(WEB_APP_URL + '?action=get')
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (!data.length) {
+        document.getElementById('lastUpdate').innerText = 'Belum ada data lokasi bus';
+        return;
+      }
+
+      data.forEach(function (bus) {
+        var lat = parseFloat(bus.lat);
+        var lng = parseFloat(bus.lng);
+
+        if (markers[bus.bus_id]) {
+          markers[bus.bus_id].setLatLng([lat, lng]);
+        } else {
+          markers[bus.bus_id] = L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(bus.bus_id);
+        }
+      });
+
+      // fokuskan peta ke bus pertama
+      var first = data[0];
+      map.panTo([parseFloat(first.lat), parseFloat(first.lng)]);
+
+      document.getElementById('lastUpdate').innerText =
+        'Terakhir dicek: ' + new Date().toLocaleTimeString();
+    })
+    .catch(function () {
+      document.getElementById('lastUpdate').innerText = 'Gagal ambil data, cek koneksi internet';
+    });
+}
+
+cekPosisiBus(); // langsung cek sekali saat halaman dibuka
+</script>
+
+</body>
+</html>
