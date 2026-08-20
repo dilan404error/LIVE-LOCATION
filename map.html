@@ -6,11 +6,9 @@
 <title>Peta Lokasi Bus</title>
 <link rel="icon" href="data:,">
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
-
 <style>
   html, body { height: 100%; margin: 0; font-family: sans-serif; }
-  #map { height: 100%; width: 100%; background: #eee; }
+  #map { height: 100%; width: 100%; border: 0; }
   #panel {
     position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
     z-index: 1000; background: white; padding: 10px 16px; border-radius: 8px;
@@ -21,10 +19,9 @@
     border: none; border-radius: 6px; cursor: pointer;
   }
   #lastUpdate { font-size: 12px; color: #555; margin-top: 6px; }
-  #loadingMsg {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 500; color: #888; font-size: 14px;
-  }
+  #busList { font-size: 13px; color: #333; margin-top: 8px; text-align: left; max-height: 120px; overflow-y: auto; }
+  #busList div { padding: 4px 0; border-top: 1px solid #eee; }
+  #busList button { padding: 4px 10px; font-size: 12px; margin-left: 8px; }
 </style>
 </head>
 <body>
@@ -32,71 +29,46 @@
 <div id="panel">
   <button onclick="cekPosisiBus()">Cek Posisi Bus</button>
   <div id="lastUpdate">Belum dicek</div>
+  <div id="busList"></div>
 </div>
-<div id="map"></div>
-<div id="loadingMsg">Memuat peta...</div>
 
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<iframe id="map" src="https://www.openstreetmap.org/export/embed.html?bbox=115.03%2C-8.15%2C115.15%2C-8.07&layer=mapnik"></iframe>
+
 <script>
-var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywB9lpr7iy87yQY3HxesGvxOSpMw0JnZGnag5AYoWqhTnvzkpF5pkzG6nNNkXeyM0G/exec';
+// GANTI dengan URL Web App hasil deploy Apps Script kamu
+var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP';
 
+var busData = [];
 
-var map = null;
-var markers = {};
-
-function initMap() {
-  if (typeof L === 'undefined') {
-    document.getElementById('loadingMsg').innerText =
-      'Gagal memuat library peta. Coba refresh halaman.';
-    return;
-  }
-
-  document.getElementById('loadingMsg').style.display = 'none';
-
-  map = L.map('map').setView([-8.1120, 115.0882], 12); // default: Buleleng, Bali
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(map);
-
-  cekPosisiBus();
+function tampilkanPeta(lat, lng) {
+  var delta = 0.01;
+  var bbox = (lng - delta) + '%2C' + (lat - delta) + '%2C' + (lng + delta) + '%2C' + (lat + delta);
+  var src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox
+           + '&layer=mapnik&marker=' + lat + '%2C' + lng;
+  document.getElementById('map').src = src;
 }
 
 function cekPosisiBus() {
-  if (!map) return;
-
   fetch(WEB_APP_URL + '?action=get')
     .then(function (res) { return res.json(); })
     .then(function (data) {
       if (!data || !data.length) {
         document.getElementById('lastUpdate').innerText = 'Belum ada data lokasi bus';
+        document.getElementById('busList').innerHTML = '';
         return;
       }
 
-      data.forEach(function (bus) {
-        var lat = parseFloat(bus.lat);
-        var lng = parseFloat(bus.lng);
-        if (isNaN(lat) || isNaN(lng)) return;
+      busData = data;
 
-        var popupText = bus.bus_id + (bus.driver_name ? ' - Supir: ' + bus.driver_name : '');
-
-        if (markers[bus.bus_id]) {
-          markers[bus.bus_id].setLatLng([lat, lng]);
-          markers[bus.bus_id].setPopupContent(popupText);
-        } else {
-          markers[bus.bus_id] = L.marker([lat, lng])
-            .addTo(map)
-            .bindPopup(popupText);
-        }
+      var listHtml = '';
+      data.forEach(function (bus, idx) {
+        var label = bus.bus_id + (bus.driver_name ? ' - ' + bus.driver_name : '');
+        listHtml += '<div>' + label + '<button onclick="tampilkanBus(' + idx + ')">Lihat</button></div>';
       });
+      document.getElementById('busList').innerHTML = listHtml;
 
       var first = data[0];
-      map.flyTo([parseFloat(first.lat), parseFloat(first.lng)], map.getZoom(), {
-        animate: true,
-        duration: 1
-      });
-      setTimeout(function () { map.invalidateSize(); }, 300);
+      tampilkanPeta(parseFloat(first.lat), parseFloat(first.lng));
 
       document.getElementById('lastUpdate').innerText =
         'Terakhir dicek: ' + new Date().toLocaleTimeString();
@@ -106,8 +78,13 @@ function cekPosisiBus() {
     });
 }
 
+function tampilkanBus(idx) {
+  var bus = busData[idx];
+  if (!bus) return;
+  tampilkanPeta(parseFloat(bus.lat), parseFloat(bus.lng));
+}
 
-window.addEventListener('load', initMap);
+cekPosisiBus(); // langsung cek sekali saat halaman dibuka
 </script>
 
 </body>
