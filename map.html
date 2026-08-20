@@ -41,11 +41,19 @@ var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywB9lpr7iy87yQY3Hxes
 var busData = [];
 
 function tampilkanPeta(lat, lng) {
+  if (isNaN(lat) || isNaN(lng)) {
+    document.getElementById('lastUpdate').innerText = 'Koordinat bus tidak valid';
+    return;
+  }
   var delta = 0.01;
   var bbox = (lng - delta) + '%2C' + (lat - delta) + '%2C' + (lng + delta) + '%2C' + (lat + delta);
+  // tambahkan timestamp biar iframe selalu reload walau koordinat sama
   var src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox
-           + '&layer=mapnik&marker=' + lat + '%2C' + lng;
-  document.getElementById('map').src = src;
+           + '&layer=mapnik&marker=' + lat + '%2C' + lng
+           + '&_=' + Date.now();
+  var frame = document.getElementById('map');
+  frame.src = 'about:blank';
+  setTimeout(function () { frame.src = src; }, 50);
 }
 
 function cekPosisiBus() {
@@ -63,7 +71,8 @@ function cekPosisiBus() {
       var listHtml = '';
       data.forEach(function (bus, idx) {
         var label = bus.bus_id + (bus.driver_name ? ' - ' + bus.driver_name : '');
-        listHtml += '<div>' + label + '<button onclick="tampilkanBus(' + idx + ')">Lihat</button></div>';
+        var koordinat = ' (lat: ' + bus.lat + ', lng: ' + bus.lng + ')';
+        listHtml += '<div>' + label + koordinat + '<button onclick="tampilkanBus(' + idx + ')">Lihat</button></div>';
       });
       document.getElementById('busList').innerHTML = listHtml;
 
